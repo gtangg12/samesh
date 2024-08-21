@@ -1,0 +1,6 @@
+---
+output: /home/ubuntu/meshseg/tests/mesh_segmentation_output_coseg_shape_diameter_function
+
+num_components: 3
+repartition_lambda: 15 #6
+repartition_iterations: 1

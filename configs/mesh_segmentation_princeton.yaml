@@ -1,0 +1,41 @@
+---
+cache: /home/ubuntu/meshseg/tests/mesh_segmentation_princeton
+cache_overwrite: False
+output: /home/ubuntu/meshseg/tests/mesh_segmentation_princeton_output
+
+sam:
+  sam:
+    checkpoint: /home/ubuntu/meshseg/checkpoints/sam2_hiera_large.pt # /home/ubuntu/meshseg/checkpoints/sam_hq_vit_h.pth
+    model_config: sam2_hiera_l.yaml
+    auto: True
+    ground: False
+    engine_config:
+      points_per_side: 32
+      crop_n_layers: 0
+      #min_mask_region_area: 1024 # sam2 breaks since it uses C connected components
+      pred_iou_thresh: 0.5
+      stability_score_thresh: 0.7
+      stability_score_offset: 1.0
+
+sam_mesh:
+  use_modes: ['sdf', 'norms']
+  min_area: 1024
+  connections_bin_resolution: 100
+  connections_bin_threshold_percentage: 0.350
+  smoothing_threshold_percentage_size: 0.025
+  smoothing_threshold_percentage_area: 0.025
+  smoothing_iterations: 64
+  repartition_cost: 1 #1
+  repartition_lambda: 6
+  repartition_lambda_tolerance: 1
+  repartition_lambda_lb: 1
+  repartition_lambda_ub: 15
+  repartition_iterations: 1
+
+renderer:
+  target_dim: [1024, 1024]
+  camera_generation_method: icosahedron #octohedron
+  renderer_args:
+    interpolate_norms: True
+  sampling_args: {radius: 2}
+  lighting_args: {}
