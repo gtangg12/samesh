@@ -1,5 +1,5 @@
 ---
-output: /home/ubuntu/meshseg/tests/mesh_segmentation_output_shape_diameter_function
+output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_shape_diameter_function
 
 num_components: 5
 repartition_lambda: 15 #6

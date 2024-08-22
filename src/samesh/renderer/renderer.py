@@ -232,7 +232,7 @@ def render_multiview(
 if __name__ == '__main__':
     from PIL import Image
     from samesh.data.loaders import read_mesh, read_scene, remove_texture, scene2mesh
-    from samesh.models.shape_diameter_function import shape_diameter_function, colormap_shape_diameter_function, prepmesh_shape_diameter_function
+    from samesh.models.shape_diameter_function import shape_diameter_function, colormap_shape_diameter_function, prep_mesh_shape_diameter_function
 
     '''
     NOTE:: if you get ctypes.ArgumentError
@@ -243,17 +243,17 @@ if __name__ == '__main__':
     extension = 'glb'
     source1 = read_mesh(f'/home/ubuntu/data/BackflipMeshes/{name}.{extension}', norm=True)
     #source1 = remove_texture(source1, visual_kind='vertex')
-    source1 = prepmesh_shape_diameter_function(source1)
+    source1 = prep_mesh_shape_diameter_function(source1)
     source1 = colormap_shape_diameter_function(source1, shape_diameter_function(source1))
     source1.export('test_mesh1.glb')
     source2 = read_scene(f'/home/ubuntu/data/BackflipMeshes/{name}.{extension}', norm=True)
     #source2 = remove_texture(source2, visual_kind='vertex')
-    source2 = prepmesh_shape_diameter_function(source2)
+    source2 = prep_mesh_shape_diameter_function(source2)
     source2 = colormap_shape_diameter_function(source2, shape_diameter_function(source2))
     source2.export('test_mesh2.glb')
     source3 = read_scene('/home/ubuntu/meshseg/tests/examples/valve.glb', norm=True)
     source3 = remove_texture(source3, visual_kind='vertex') # remove texture for meshlab to export
-    source3 = prepmesh_shape_diameter_function(source3)
+    source3 = prep_mesh_shape_diameter_function(source3)
     source3 = colormap_shape_diameter_function(source3, shape_diameter_function(source3))
     source3.export('test_mesh3.glb')
 

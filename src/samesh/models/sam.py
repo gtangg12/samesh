@@ -8,10 +8,14 @@ import torch.nn as nn
 from PIL import Image
 from omegaconf import OmegaConf
 from transformers import AutoProcessor, AutoModel
-from segment_anything import SamAutomaticMaskGenerator, SamPredictor, sam_model_registry
-from sam2.build_sam import build_sam2
-from sam2.sam2_image_predictor import SAM2ImagePredictor
-from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
+
+USE_SAMHQ = False
+if USE_SAMHQ:
+    from segment_anything import SamAutomaticMaskGenerator, SamPredictor, sam_model_registry
+else:
+    from sam2.build_sam import build_sam2
+    from sam2.sam2_image_predictor import SAM2ImagePredictor
+    from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
 
 
 from samesh.data.common import NumpyTensor

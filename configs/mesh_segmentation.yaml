@@ -1,11 +1,11 @@
 ---
-cache: /home/ubuntu/meshseg/tests/mesh_segmentation_tmp
+cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache
 cache_overwrite: False
-output: /home/ubuntu/meshseg/tests/mesh_segmentation_output_tmp
+output: /home/gtangg12/samesh/outputs/mesh_segmentation_output
 
 sam:
   sam:
-    checkpoint: /home/ubuntu/meshseg/checkpoints/sam2_hiera_large.pt # /home/ubuntu/meshseg/checkpoints/sam_hq_vit_h.pth
+    checkpoint: /home/gtangg12/samesh/checkpoints/sam2_hiera_large.pt
     model_config: sam2_hiera_l.yaml
     auto: True
     ground: False

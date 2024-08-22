@@ -1,8 +1,5 @@
-tests/
-lightning_logs/
 checkpoints/
-logs/
-cache/
+outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

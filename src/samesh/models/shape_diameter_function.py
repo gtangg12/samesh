@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import copy
 from pathlib import Path
 from collections import defaultdict
 
@@ -149,7 +150,7 @@ def repartition(
     return partition
 
 
-def prepmesh_shape_diameter_function(source: Trimesh | Scene) -> Trimesh:
+def prep_mesh_shape_diameter_function(source: Trimesh | Scene) -> Trimesh:
     """
     """
     if isinstance(source, trimesh.Scene):
@@ -258,15 +259,16 @@ def partition2label(mesh: Trimesh, partition: NumpyTensor['f']) -> NumpyTensor['
     return partition_output
 
 
-def segment_mesh_sdf(filename: Path, config: OmegaConf, extension='glb') -> Trimesh:
+def segment_mesh_sdf(filename: Path | str, config: OmegaConf, extension='glb') -> Trimesh:
     """
     """
     print('Segmenting mesh with Shape Diameter Funciont: ', filename)
-
-    config.output = config.output / filename.stem
+    filename = Path(filename)
+    config = copy.deepcopy(config)
+    config.output = Path(config.output) / filename.stem
 
     mesh = read_mesh(filename, norm=True)
-    mesh = prepmesh_shape_diameter_function(mesh)
+    mesh = prep_mesh_shape_diameter_function(mesh)
     partition              = partition_faces(mesh, config.num_components, config.repartition_lambda, config.repartition_iterations)
     partition_disconnected = partition2label(mesh, partition)
     faces2label = {int(i): int(partition_disconnected[i]) for i in range(len(partition_disconnected))}
@@ -292,17 +294,18 @@ if __name__ == '__main__':
         return filenames
 
     '''
+    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function.yaml')
     filenames = read_filenames('/home/ubuntu/data/backflip-benchmark-remeshed-processed/*.glb')
 
     for filename in filenames:
-        config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function.yaml')
         segment_mesh_sdf(filename config)
     '''
-
+    
+    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function_coseg.yaml')
     categories = ['candelabra', 'chairs', 'fourleg', 'goblets', 'guitars', 'irons', 'lamps', 'vases']
     for cat in categories:
         filenames = read_filenames(f'/home/ubuntu/data/coseg/{cat}/*.off')
         for filename in filenames:
-            config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function_coseg.yaml')
+            config = copy.deepcopy(config)
             config.output = Path(config.output) / cat
             segment_mesh_sdf(filename, config)

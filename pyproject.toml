@@ -13,7 +13,6 @@ classifiers = [
 ]
 dependencies = [
     "pandas",
-    "sckit-learn",
     "omegaconf",
     "igraph",
     "networkx",
@@ -22,18 +21,25 @@ dependencies = [
     "trimesh",
     "lightning",
     "tqdm",
+    "scikit-learn",
+    "natsort",
     "numpy==1.26.4",
     "torch==2.3.1",
     "torchvision==0.18.1",
-    "PyOpenGL==3.1.7",
+    "torchtyping",
+    "matplotlib",
+    "opencv-python",
+    "transformers",
 ]
+
+# Install PyOpenGL==3.1.7 if pyrender errors
 
 [project.optional-dependencies]
 
 # Development dependencies
 dev = []
 
-# Install SAM2 with --no-build-isolation flag
+# Install SAM2 with --no-build-isolation flag if build errors
 
 [project.scripts]
 

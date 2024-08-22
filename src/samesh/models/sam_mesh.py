@@ -1,6 +1,7 @@
 import shutil
 import os
 import json
+import copy
 import multiprocessing as mp
 from collections import defaultdict, Counter
 from pathlib import Path
@@ -250,7 +251,7 @@ class SamModelMesh(nn.Module):
 
         if 'sdf' in self.config.sam_mesh.use_modes:
             #scene_sdf = remove_texture(scene)
-            tmesh_sdf = prepmesh_shape_diameter_function(scene)
+            tmesh_sdf = prep_mesh_shape_diameter_function(scene)
             tmesh_sdf = colormap_shape_diameter_function(tmesh_sdf, sdf_values=shape_diameter_function(tmesh_sdf))
             self.load(tmesh_sdf)
             renders_sdf = render_func(uv_map=True)
@@ -606,10 +607,12 @@ class SamModelMesh(nn.Module):
         return components
 
 
-def segment_mesh(filename: Path, config: OmegaConf, visualize=False, extension='glb', target_labels=None, texture=False) -> Trimesh:
+def segment_mesh(filename: Path | str, config: OmegaConf, visualize=False, extension='glb', target_labels=None, texture=False) -> Trimesh:
     """
     """
     print('Segmenting mesh with SAMesh: ', filename)
+    filename = Path(filename)
+    config = copy.deepcopy(config)
     config.cache  = Path(config.cache)  / filename.stem
     config.output = Path(config.output) / filename.stem
 
@@ -644,18 +647,18 @@ if __name__ == '__main__':
         return filenames
 
     #filenames = read_filenames('/home/ubuntu/data/backflip-benchmark-remeshed-processed/*.glb')
+    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation.yaml')
     filenames = [Path('/home/ubuntu/data/backflip-benchmark-remeshed-processed/jacket.glb')]
     for i, filename in enumerate(filenames):
-        config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation.yaml')
         segment_mesh(filename, config, visualize=True)
 
     '''
     with open('/home/ubuntu/data/MeshsegBenchmark-1.0/util/parameters/nSeg-ByModel.txt') as f:
         target_labels_dict = {str(i): int(line) for i, line in enumerate(f.readlines(), 1)}
     
+    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_princeton.yaml')
     filenames = read_filenames('/home/ubuntu/data/MeshsegBenchmark-1.0/data/off/*.off')
     for i, filename in enumerate(filenames):
-        config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_princeton.yaml')
         name, extension = filename.stem, filename.suffix[1:]
         category = (int(name) - 1) // 20 + 1
         #if category not in [4, 8, 14, 17]:
@@ -664,11 +667,12 @@ if __name__ == '__main__':
     '''
 
     '''
+    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_coseg.yaml')
     categories = ['candelabra', 'chairs', 'fourleg', 'goblets', 'guitars', 'irons', 'lamps', 'vases']
     for cat in categories:
         filenames = read_filenames(f'/home/ubuntu/data/coseg/{cat}/*.off')
         for filename in filenames:
-            config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_coseg.yaml')
+            config = copy.deepcopy(config)
             config.output = Path(config.output) / cat
             config.cache  = Path(config.cache)  / cat
             segment_mesh(filename, config, visualize=True)
