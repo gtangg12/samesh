@@ -22,7 +22,7 @@ Don't forget to init the submodules and pip install -e on them respectively. We 
 
 ## Getting Started
 
-Download a SAM2 checkpoint as provided in the SAM2 repo. `notebooks/mesh_samesh.ipynb` and `notebooks/mesh_shape_diameter_function.ipynb` are detail how to setup and run SAMesh and ShapeDiam, respectively.
+Download a SAM2 checkpoint as provided in the SAM2 repo. `notebooks/mesh_samesh.ipynb` and `notebooks/mesh_shape_diameter_function.ipynb` are detail how to setup and run SAMesh and ShapeDiam, respectively. Some mesh examples from the curated dataset are provided in `assets`.
 
 
 ## Dataset
