@@ -6,9 +6,12 @@ Requires: trimesh, numpy, torch, torchtyping, omegaconf
 """
 from __future__ import annotations
 
+import os
 import sys
 import traceback
+from collections import defaultdict
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import trimesh
@@ -66,6 +69,89 @@ def _broken_visuals_mesh() -> Trimesh:
 
     mesh.visual = _BadVisual()
     return mesh
+
+
+def _quad_strip_with_isolated(n_quads: int = 5, n_isolated: int = 5) -> Trimesh:
+    """Triangulated quad strip + isolated triangles with no shared vertices."""
+    n_cols = n_quads + 1
+    strip_verts = []
+    for col in range(n_cols):
+        strip_verts.append([col, 0.0, 0.0])
+        strip_verts.append([col, 1.0, 0.0])
+    strip_verts = np.array(strip_verts, dtype=np.float64)
+
+    strip_faces = []
+    for q in range(n_quads):
+        bl, tl = 2 * q, 2 * q + 1
+        br, tr = 2 * (q + 1), 2 * (q + 1) + 1
+        strip_faces.append([bl, br, tl])
+        strip_faces.append([tl, br, tr])
+    strip_faces = np.array(strip_faces, dtype=np.int64)
+
+    iso_verts = []
+    iso_faces = []
+    base = len(strip_verts)
+    for i in range(n_isolated):
+        x = 100 + 10 * i
+        iso_verts.append([x, 0, 0])
+        iso_verts.append([x + 1, 0, 0])
+        iso_verts.append([x, 1, 0])
+        iso_faces.append([base + 3 * i + 0, base + 3 * i + 1, base + 3 * i + 2])
+    iso_verts = np.array(iso_verts, dtype=np.float64)
+    iso_faces = np.array(iso_faces, dtype=np.int64)
+
+    verts = np.concatenate([strip_verts, iso_verts], axis=0)
+    faces = np.concatenate([strip_faces, iso_faces], axis=0)
+    return Trimesh(vertices=verts, faces=faces, process=False)
+
+
+def _label_components(mesh_graph, num_faces, face2label):
+    """Mirror of SamModelMesh.label_components for testing without heavy deps."""
+    components = []
+    visited = set()
+
+    def dfs(source):
+        stack = [source]
+        components.append({source})
+        visited.add(source)
+        while stack:
+            node = stack.pop()
+            for adj in mesh_graph[node]:
+                if (
+                    adj not in visited
+                    and adj in face2label
+                    and face2label[adj] == face2label[node]
+                ):
+                    stack.append(adj)
+                    components[-1].add(adj)
+                    visited.add(adj)
+
+    for face in range(num_faces):
+        if face not in visited and face in face2label:
+            dfs(face)
+    return components
+
+
+def _run_split(mesh: Trimesh, face2label: dict, min_component_size: int) -> dict:
+    """Mirror of SamModelMesh.split (patched) for testing without heavy deps."""
+    edges = trimesh.graph.face_adjacency(mesh=mesh)
+    mesh_graph = defaultdict(set)
+    for a, b in edges:
+        mesh_graph[int(a)].add(int(b))
+        mesh_graph[int(b)].add(int(a))
+
+    face2label = dict(face2label)
+    components = _label_components(mesh_graph, len(mesh.faces), face2label)
+    labels_seen = set()
+    labels_curr = max(face2label.values()) + 1
+    for comp in components:
+        face = next(iter(comp))
+        label = face2label[face]
+        if (label == 0 or label in labels_seen) and len(comp) >= min_component_size:
+            face2label.update({f: labels_curr for f in comp})
+            labels_curr += 1
+        labels_seen.add(label)
+    return face2label
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +233,28 @@ def test_pyopengl_platform_not_forced_on_non_linux():
     assert "os.environ['PYOPENGL_PLATFORM'] = 'egl'" not in head, head
 
 
+def test_split_without_threshold_creates_new_labels():
+    mesh = _quad_strip_with_isolated(n_quads=5, n_isolated=5)
+    face2label = {i: 1 for i in range(len(mesh.faces))}
+    out = _run_split(mesh, face2label, min_component_size=1)
+    n_labels = len(set(out.values()))
+    assert n_labels == 6, f"expected 6 labels, got {n_labels}"
+
+
+def test_split_with_threshold_prevents_isolated_splits():
+    mesh = _quad_strip_with_isolated(n_quads=5, n_isolated=5)
+    face2label = {i: 1 for i in range(len(mesh.faces))}
+    out = _run_split(mesh, face2label, min_component_size=5)
+    n_labels = len(set(out.values()))
+    assert n_labels == 1, f"expected 1 label, got {n_labels}"
+
+
+def test_sam_mesh_split_source_uses_min_component_size():
+    src = (SRC_ROOT / "samesh" / "models" / "sam_mesh.py").read_text()
+    assert "split_min_component_size" in src, src
+    assert "len(comp) >= min_component_size" in src, src
+
+
 # ---------------------------------------------------------------------------
 # Test runner
 # ---------------------------------------------------------------------------
@@ -159,6 +267,9 @@ TESTS = [
     test_white_background_decodes_to_minus_one,
     test_antialiased_pixel_clamped,
     test_pyopengl_platform_not_forced_on_non_linux,
+    test_split_without_threshold_creates_new_labels,
+    test_split_with_threshold_prevents_isolated_splits,
+    test_sam_mesh_split_source_uses_min_component_size,
 ]
 
 
