@@ -42,6 +42,7 @@ dev = []
 # Install SAM2 with --no-build-isolation flag if build errors
 
 [project.scripts]
+samesh = "samesh.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
