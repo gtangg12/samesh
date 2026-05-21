@@ -487,11 +487,12 @@ class SamModelMesh(nn.Module):
         labels_seen = set()
         labels_curr = max(face2label_consistent.values()) + 1
         labels_orig = labels_curr
+        min_component_size = self.config.sam_mesh.get('split_min_component_size', 1)
         for comp in components:
             face = comp.pop()
             label = face2label_consistent[face]
             comp.add(face)
-            if label == 0 or label in labels_seen: # background or repeated label
+            if (label == 0 or label in labels_seen) and len(comp) >= min_component_size:
                 face2label_consistent.update({face: labels_curr for face in comp})
                 labels_curr += 1
             labels_seen.add(label)

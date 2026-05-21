@@ -1,6 +1,8 @@
 import os
-os.environ['PYOPENGL_PLATFORM'] = 'egl'
-os.environ['EGL_DEVICE_ID'] = '-1' # NOTE: necessary to not create GPU contention
+import platform as _platform
+if _platform.system() == 'Linux':
+    os.environ.setdefault('PYOPENGL_PLATFORM', 'egl')
+    os.environ.setdefault('EGL_DEVICE_ID', '-1') # NOTE: necessary to not create GPU contention
 
 ### START VOODOO ###
 # Dark encantation for disabling anti-aliasing in pyrender (if needed)
@@ -149,7 +151,8 @@ class Renderer:
             """
             faces = faces.astype(np.int32)
             faces = faces[:, :, 0] * 65536 + faces[:, :, 1] * 256 + faces[:, :, 2]
-            faces[faces == (256 ** 3 - 1)] = -1 # set background to -1
+            num_faces = self.tmesh_faceid.faces.shape[0]
+            faces[faces >= num_faces] = -1 # background + anti-aliasing artifacts
             return faces
 
         def render_bcent(bcent: NumpyTensor['h w 3']) -> NumpyTensor['h w 3']:

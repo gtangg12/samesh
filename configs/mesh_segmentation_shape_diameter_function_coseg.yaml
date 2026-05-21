@@ -1,5 +1,5 @@
 ---
-output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_coseg_shape_diameter_function
+output: outputs/mesh_segmentation_output_coseg_shape_diameter_function
 
 num_components: 3
 repartition_lambda: 15 #6

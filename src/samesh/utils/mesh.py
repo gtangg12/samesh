@@ -19,7 +19,11 @@ def duplicate_verts(mesh: Trimesh) -> Trimesh:
     verts = mesh.vertices[mesh.faces.reshape(-1), :]
     faces = np.arange(0, verts.shape[0])
     faces = faces.reshape(-1, 3)
-    return Trimesh(vertices=verts, faces=faces, face_colors=mesh.visual.face_colors, process=False)
+    try:
+        face_colors = mesh.visual.face_colors
+    except (AttributeError, ValueError, IndexError):
+        face_colors = np.full((len(mesh.faces), 4), [200, 200, 200, 255], dtype=np.uint8)
+    return Trimesh(vertices=verts, faces=faces, face_colors=face_colors, process=False)
 
 
 def handle_pose(pose: NumpyTensor['4 4']) -> NumpyTensor['4 4']:
