@@ -110,6 +110,11 @@ def repartition(
 
     cost_smoothness = cost_smoothness * _lambda
 
+    # st_mincut requires non-negative capacities; the smoothness term
+    # -log(angle / pi + EPSILON) dips marginally below zero when an adjacency
+    # angle reaches pi, so clamp to guard the invariant (no-op on typical data).
+    cost_smoothness = np.clip(cost_smoothness, 0.0, None)
+
     # networkx broken for float capacities
     #cost_data       = np.round(cost_data       * SCALE).astype(int)
     #cost_smoothness = np.round(cost_smoothness * SCALE).astype(int)
@@ -140,12 +145,23 @@ def repartition(
             T = np.array([index2node[v] for v in T if isinstance(index2node[v], int)]).astype(int)
 
             assert (partition[S] == label).sum() == 0 # T consists of those assigned 'alpha' and S 'alpha_complement' (see paper)
-            partition[T] = label
 
+            # Tentatively apply the alpha-expansion move, then accept it only if it
+            # does not increase the energy. In exact arithmetic the cut is optimal
+            # so cost cannot rise, but with floating-point capacities (and the
+            # degenerate/duplicate adjacencies that show up on imperfect meshes)
+            # the recomputed cost can rise by a tiny amount. Rather than aborting
+            # the whole segmentation (issue #13), reject non-improving moves and
+            # continue. On meshes where every move strictly improves cost, this is
+            # bit-equivalent to the previous behaviour.
+            previous = partition[T].copy()
+            partition[T] = label
             cost = partition_cost(mesh, partition, cost_data, cost_smoothness)
-            if cost > cost_min:
-                raise ValueError('Cost increased. This should not happen because the graph cut is optimal.')
-            cost_min = cost
+            tolerance = 1e-9 * (abs(cost_min) + 1.0)
+            if cost > cost_min + tolerance:
+                partition[T] = previous  # revert: keep the better partition
+            else:
+                cost_min = min(cost_min, cost)
     
     return partition
 
